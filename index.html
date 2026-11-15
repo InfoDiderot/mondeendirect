@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Le monde en direct</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0a0f16;--panel:#111926;--panel2:#162132;--line:#223047;--txt:#e8eef7;--mut:#8497b0;
+  --live:#35d39a;--est:#f2b84b;--ref:#7f8ea5;--acc:#4cc2ff;
+  --sans:"Space Grotesk",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,Consolas,"Courier New",monospace;
+}
+[data-theme="light"]{
+  --bg:#f3f5f8;--panel:#ffffff;--panel2:#f7f9fc;--line:#d9e0ea;--txt:#111a27;--mut:#5b6b82;
+  --live:#0b8f60;--est:#a86a00;--ref:#66758c;--acc:#0a6fb5;
+}
+*{box-sizing:border-box}
+html{font-size:16px;scroll-behavior:smooth}
+html.big{font-size:19px}
+body{margin:0;background:var(--bg);color:var(--txt);font-family:var(--sans);line-height:1.4}
+a{color:var(--acc);text-decoration:none}a:hover{text-decoration:underline}
+button{font:inherit;color:inherit;cursor:pointer}
+.wrap{max-width:none;margin:0 auto;padding:0 .75rem 1.5rem}
+
+/* En-tête */
+header{position:sticky;top:0;z-index:10;background:color-mix(in srgb,var(--bg) 92%,transparent);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.top{max-width:none;margin:0 auto;padding:.3rem .75rem;display:flex;align-items:center;gap:1rem;flex-wrap:wrap}
+.brand{font-weight:700;letter-spacing:.14em;text-transform:uppercase;font-size:.85rem}
+.brand i{display:inline-block;width:.55rem;height:.55rem;border-radius:50%;background:var(--live);margin-right:.5rem;animation:pulse 2s infinite}
+@keyframes pulse{50%{opacity:.25}}
+.clock{font-family:var(--mono);font-weight:600;font-size:1.25rem;font-variant-numeric:tabular-nums;margin-left:auto}
+.date{color:var(--mut);font-size:.72rem;text-align:right;line-height:1.25}
+.tools{display:flex;gap:.4rem}
+.tools button{background:var(--panel);border:1px solid var(--line);border-radius:.4rem;padding:.2rem .5rem;font-size:.7rem}
+.tools button:hover{border-color:var(--acc)}
+nav{margin:0 auto;padding:0 .75rem .4rem;display:flex;gap:.4rem;overflow-x:auto;scrollbar-width:none}
+nav a{white-space:nowrap;font-size:.78rem;color:var(--mut);border:1px solid var(--line);border-radius:2rem;padding:.2rem .7rem}
+nav a:hover{color:var(--txt);border-color:var(--acc);text-decoration:none}
+
+/* Bandeau des essentiels : une seule rangée */
+.hero{display:grid;grid-template-columns:2.1fr repeat(6,1fr);gap:.4rem;margin-top:.6rem}
+.hero .tile{background:var(--panel);border:1px solid var(--line);border-radius:.4rem;padding:.4rem .6rem;min-width:0}
+.hero .tile:first-child{background:linear-gradient(135deg,var(--panel2),var(--panel))}
+.hero .lab{font-size:.6rem;letter-spacing:.08em;text-transform:uppercase;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hero .num{font-family:var(--mono);font-weight:600;font-variant-numeric:tabular-nums;font-size:1.05rem;white-space:nowrap}
+.hero .tile:first-child .num{font-size:1.75rem;line-height:1.1;color:var(--acc)}
+.hero .sub{font-size:.6rem;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* Bandeau heures + météo */
+.strip{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:.4rem;margin-top:.4rem}
+.cities{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:.3rem}
+.city{background:var(--panel);border:1px solid var(--line);border-radius:.4rem;padding:.25rem .5rem;display:flex;align-items:baseline;gap:.4rem;min-width:0}
+.city .n{font-size:.62rem;color:var(--mut);text-transform:uppercase;letter-spacing:.06em;white-space:nowrap}
+.city .h{font-family:var(--mono);font-size:.9rem;font-weight:600}
+.city .w{font-size:.68rem;color:var(--mut);margin-left:auto;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.meteo{background:var(--panel);border:1px solid var(--line);border-radius:.4rem;padding:.3rem .55rem;display:flex;flex-direction:column;justify-content:space-between;gap:.2rem;min-width:0}
+.now{display:flex;align-items:baseline;gap:.5rem;flex-wrap:wrap;font-size:.72rem}
+.now .t{font-family:var(--mono);font-size:1.05rem;font-weight:600}
+.now .d{color:var(--mut);font-size:.66rem}
+.days{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:.3rem}
+.day{font-size:.66rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.day .ic,.day .n,.day .mm{display:inline}.day .n{color:var(--mut);text-transform:uppercase}.day .mm{font-family:var(--mono)}
+.day .p{display:none}.day .p:last-child{display:inline;color:var(--mut)}
+.striphead{display:flex;gap:.8rem;align-items:center;font-size:.66rem;color:var(--mut);margin-top:.5rem}
+.legend{margin-left:auto;display:flex;gap:.8rem}
+
+/* Compteurs : panneaux en colonnes, une ligne par compteur */
+#auto{columns:21rem;column-gap:.5rem;margin-top:.5rem}
+section{break-inside:avoid;margin:0 0 .5rem;scroll-margin-top:4rem;background:var(--panel);border:1px solid var(--line);border-top:2px solid var(--c,var(--acc));border-radius:.4rem;overflow:hidden}
+details>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:.5rem;padding:.25rem .55rem;background:var(--panel2)}
+details>summary::-webkit-details-marker{display:none}
+summary h2{margin:0;font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:var(--c,var(--txt))}
+summary .cnt{color:var(--mut);font-size:.62rem;margin-left:auto}
+summary::after{content:"▾";color:var(--mut);font-size:.7rem}
+details:not([open])>summary::after{content:"▸"}
+.row{display:grid;grid-template-columns:.45rem minmax(0,1fr) auto;column-gap:.4rem;align-items:baseline;padding:.1rem .55rem;border-top:1px solid var(--line);line-height:1.2}
+.row .l{font-size:.74rem;line-height:1.25}
+.row .l small{color:var(--mut);font-size:.6rem;text-transform:uppercase;letter-spacing:.05em;margin-left:.25rem}
+.row .r{text-align:right;white-space:nowrap}
+.row .v{font-family:var(--mono);font-weight:600;font-size:.84rem;font-variant-numeric:tabular-nums}
+.row.key .v{font-size:1rem;color:var(--c,var(--acc))}
+.row .u{font-size:.6rem;color:var(--mut);margin-left:.25rem}
+.row .x{grid-column:2/4;font-size:.6rem;color:var(--mut);line-height:1.2}
+.row .src{display:none}
+html.src .row .src{display:block}
+.dot{width:.4rem;height:.4rem;border-radius:50%;display:inline-block;background:currentColor;align-self:center}
+.badge{font-size:.6rem;letter-spacing:.08em;text-transform:uppercase;white-space:nowrap}
+.badge::before{content:"";display:inline-block;width:.42rem;height:.42rem;border-radius:50%;margin-right:.3rem;background:currentColor}
+.b-live{color:var(--live)}.b-est{color:var(--est)}.b-ref{color:var(--ref)}.b-off{color:#e2665c}
+table{width:100%;border-collapse:collapse;font-size:.68rem}
+th,td{padding:.12rem .55rem;text-align:left;border-top:1px solid var(--line)}
+th{font-size:.58rem;color:var(--mut);text-transform:uppercase;letter-spacing:.06em}
+td.m{font-family:var(--mono);font-weight:600}
+.sub2{padding:.25rem .55rem 0;font-size:.6rem;color:var(--mut);text-transform:uppercase;letter-spacing:.08em;border-top:1px solid var(--line)}
+
+/* Globe 3D */
+#globeBox{position:relative;width:100%;aspect-ratio:1/.8;max-height:21rem;cursor:grab;touch-action:none;background:radial-gradient(circle at 50% 50%,color-mix(in srgb,var(--acc) 10%,transparent),transparent 62%)}
+#globeBox:active{cursor:grabbing}
+#globeBox canvas{display:block;width:100%;height:100%}
+#globeMsg{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:.7rem;color:var(--mut);text-align:center;padding:1rem;pointer-events:none}
+.glegend{display:flex;gap:.7rem;flex-wrap:wrap;padding:.2rem .55rem .3rem;font-size:.6rem;color:var(--mut);border-top:1px solid var(--line)}
+.glegend i{display:inline-block;width:.45rem;height:.45rem;border-radius:50%;margin-right:.25rem}
+/* Relief des tuiles */
+.hero{perspective:900px}
+.hero .tile{box-shadow:0 1px 0 color-mix(in srgb,var(--txt) 8%,transparent) inset,0 6px 14px -8px rgba(0,0,0,.55);transition:transform .25s ease,box-shadow .25s ease;transform-style:preserve-3d}
+.hero .tile:hover{transform:translateZ(18px) rotateX(5deg);box-shadow:0 1px 0 color-mix(in srgb,var(--txt) 12%,transparent) inset,0 16px 24px -12px rgba(0,0,0,.7)}
+@media (prefers-reduced-motion:reduce){.hero .tile{transition:none}.hero .tile:hover{transform:none}}
+
+/* Actualité (en bas de page) */
+.newsbox{margin-top:.5rem}
+.news{display:grid;grid-template-columns:repeat(auto-fit,minmax(18rem,1fr));gap:.5rem}
+.feed{background:var(--panel);border:1px solid var(--line);border-radius:.4rem;padding:.45rem .7rem}
+.feed h3{margin:0 0 .25rem;font-size:.66rem;letter-spacing:.1em;text-transform:uppercase;color:var(--mut)}
+.feed ol{margin:0;padding-left:1rem}.feed li{margin:.15rem 0;font-size:.76rem}
+.feed li a{color:var(--txt)}.feed time{color:var(--mut);font-size:.62rem;margin-left:.3rem}
+.feed .u{font-size:.74rem;color:var(--mut)}
+footer{margin-top:1rem;padding-top:.6rem;border-top:1px solid var(--line);color:var(--mut);font-size:.7rem}
+footer p{max-width:none;margin:.3rem 0}
+@media (min-width:1100px){nav{display:none}}
+@media (max-width:1100px){.hero{grid-template-columns:repeat(3,1fr)}.hero .tile:first-child{grid-column:span 3}.strip{grid-template-columns:1fr}.cities{grid-template-columns:repeat(2,minmax(0,1fr))}.clock{margin-left:0}}
+</style>
+</head>
+<body>
+<header>
+  <div class="top">
+    <div class="brand"><i></i>Le monde en direct</div>
+    <div class="clock" id="clock">--:--:--</div>
+    <div class="date"><div id="date"></div><div id="dateinfo"></div></div>
+    <div class="tools">
+      <button id="bTheme" title="Clair / sombre">◐ Thème</button>
+      <button id="bSrc" title="Afficher la source sous chaque compteur">ⓘ Sources</button>
+      <button id="bBig" title="Agrandir pour la projection">A+ Projection</button>
+      <button id="bFull" title="Plein écran">⛶ Plein écran</button>
+    </div>
+  </div>
+  <nav id="nav"></nav>
+</header>
+
+<div class="wrap">
+  <div class="hero" id="hero"></div>
+
+  <div class="strip" id="villes">
+    <div class="cities" id="cities"></div>
+    <div class="meteo" id="meteo"><div class="now" id="wNow">Météo de Bruxelles : chargement…</div><div class="days" id="wDays"></div></div>
+  </div>
+  <div class="striphead"><span id="sunmoon"></span><span><span class="badge b-live" id="stMeteo">Direct</span> météo Open-Meteo</span>
+    <span class="legend"><span class="badge b-live">Direct</span><span class="badge b-est">Estimé</span><span class="badge b-ref">Référence</span></span></div>
+
+  <div id="auto"></div>
+
+  <div class="newsbox" id="actu"><div class="striphead" style="margin:0 0 .3rem"><b>ACTUALITÉ</b><span><span class="badge b-live" id="stNews">Direct</span> flux RSS</span></div>
+    <div class="news" id="news"></div></div>
+
+  <footer>
+    <p><b>Méthode.</b> Les compteurs marqués « estimé » ne sont pas des mesures : ils répartissent sur l'année, à rythme constant, le dernier total annuel publié par la source indiquée. Les valeurs « référence » sont des chiffres fixes. Seuls les blocs « direct » interrogent un service en temps réel (Open-Meteo, USGS, OpenSky Network, contours Natural Earth pour le globe, wheretheiss.at, Frankfurter/BCE, flux RSS) ; s'il ne répond pas, le bloc l'indique.</p>
+    <p>Inspiré de <a href="https://www.worldometers.info/" target="_blank" rel="noopener">Worldometers</a>, <a href="https://www.world-metrics.com/" target="_blank" rel="noopener">World Metrics</a>, <a href="https://horloge-planete.com/" target="_blank" rel="noopener">Horloge de la planète</a>, <a href="https://unitconv.org/fr/explore/world-counters" target="_blank" rel="noopener">Unitconv</a> et <a href="https://app.electricitymaps.com/map" target="_blank" rel="noopener">Electricity Maps</a>. Chiffres recalculés à partir des sources primaires citées sous chaque compteur.</p>
+  </footer>
+</div>
+
+<script>
+"use strict";
+/* ================= RÉGLAGES ================= */
+const HOME = {n:"Bruxelles", lat:50.85, lon:4.35, tz:"Europe/Brussels"};
+const CITIES = [HOME,
+  {n:"Londres",lat:51.51,lon:-0.13,tz:"Europe/London"},
+  {n:"New York",lat:40.71,lon:-74.01,tz:"America/New_York"},
+  {n:"São Paulo",lat:-23.55,lon:-46.63,tz:"America/Sao_Paulo"},
+  {n:"Le Caire",lat:30.04,lon:31.24,tz:"Africa/Cairo"},
+  {n:"Mumbai",lat:19.08,lon:72.88,tz:"Asia/Kolkata"},
+  {n:"Tokyo",lat:35.68,lon:139.69,tz:"Asia/Tokyo"},
+  {n:"Sydney",lat:-33.87,lon:151.21,tz:"Australia/Sydney"}];
+const FEEDS = [
+  {n:"RTBF Info — Belgique", site:"https://www.rtbf.be/info", url:"https://rss.rtbf.be/article/rss/highlight_rtbf_info.xml"},
+  {n:"Le Monde — International", site:"https://www.lemonde.fr/international/", url:"https://www.lemonde.fr/international/rss_full.xml"},
+  {n:"France 24 — Monde", site:"https://www.france24.com/fr/", url:"https://www.france24.com/fr/rss"}];
+
+/* ================= COMPTEURS =================
+   r = total annuel ; p = "y" cumul depuis le 1er janvier, "d" cumul depuis minuit,
+   "a" valeur absolue (b = base à la date a), "s" valeur fixe (v).
+   k = diviseur d'affichage, d = décimales. */
+const Md=1e9, M=1e6;
+const SECTIONS = [
+{id:"population", t:"Population", c:"#4cc2ff", items:[
+  {key:"pop", big:1, l:"Population mondiale", p:"a", b:8266e6, a:Date.UTC(2026,0,1), r:69e6, u:"habitants", s:"ONU, WPP 2024"},
+  {l:"Naissances", p:"y", r:132e6, u:"naissances", s:"ONU, WPP 2024"},
+  {key:"births", l:"Naissances", p:"d", r:132e6, u:"naissances", s:"ONU, WPP 2024"},
+  {l:"Décès", p:"y", r:63e6, u:"décès", s:"ONU, WPP 2024"},
+  {l:"Décès", p:"d", r:63e6, u:"décès", s:"ONU, WPP 2024"},
+  {l:"Croissance nette", p:"y", r:69e6, u:"personnes", s:"ONU, WPP 2024"}]},
+{id:"environnement", t:"Environnement", c:"#35d39a", items:[
+  {key:"co2", big:1, l:"CO₂ fossile émis", p:"y", r:37.4e9, u:"tonnes", s:"Global Carbon Budget 2024"},
+  {l:"Déforestation brute", p:"y", r:10.9e6, u:"hectares", s:"FAO, FRA 2025"},
+  {l:"Perte nette de forêts", p:"y", r:4.12e6, u:"hectares", s:"FAO, FRA 2025"},
+  {l:"Terres perdues (désertification)", p:"y", r:12e6, u:"hectares", s:"CNULCD"},
+  {l:"Plastique produit", p:"y", r:414e6, u:"tonnes", s:"Plastics Europe 2023"},
+  {l:"Plastique rejeté dans les eaux", p:"y", r:6.1e6, u:"tonnes", s:"OCDE 2022"},
+  {l:"Déchets municipaux générés", p:"y", r:2.1e9, u:"tonnes", s:"PNUE 2024"},
+  {l:"Déchets électroniques", p:"y", r:62e6, u:"tonnes", s:"Global E-waste Monitor 2024"},
+  {l:"Glace perdue par le Groenland", p:"y", r:266e9, u:"tonnes", s:"NASA, GRACE"},
+  {l:"CO₂ dans l'atmosphère", p:"s", v:"≈ 425", u:"ppm", s:"NOAA, Mauna Loa"}]},
+{id:"energie", t:"Énergie", c:"#f2b84b", items:[
+  {key:"nrj", big:1, l:"Énergie primaire consommée", p:"d", r:172000e6, u:"MWh", s:"Energy Institute 2024"},
+  {l:"Électricité produite", p:"d", r:30850e6, u:"MWh", s:"Ember 2025"},
+  {l:"dont électricité renouvelable", p:"d", r:9870e6, u:"MWh", s:"Ember 2025"},
+  {l:"Électricité solaire produite", p:"d", r:2130e6, u:"MWh", s:"Ember 2025"},
+  {l:"Électricité éolienne produite", p:"d", r:2500e6, u:"MWh", s:"Ember 2025"},
+  {l:"Énergie solaire reçue par la Terre", p:"d", r:173000*8766*1e6, k:1e6, u:"TWh", s:"173 000 TW en continu"},
+  {l:"Pétrole consommé", p:"d", r:102e6*365.25, u:"barils", s:"AIE 2024"},
+  {l:"Charbon consommé", p:"y", r:8.8e9, u:"tonnes", s:"AIE 2024"},
+  {l:"Gaz naturel consommé", p:"y", r:4200e9, k:1e6, u:"M m³", s:"AIE 2024"},
+  {l:"Électricité bas carbone dans le monde", p:"s", v:"≈ 41 %", u:"de la production", s:"Ember 2025"},
+  {l:"Prix et carbone de l'électricité par pays", p:"s", v:"Carte ↗", href:"https://app.electricitymaps.com/map/fifteen_minutes?lang=fr&signal=electricity-price", u:"", s:"Electricity Maps"}]},
+{id:"sante", t:"Santé", c:"#ff7a8a", items:[
+  {big:1, l:"Décès cardiovasculaires", p:"y", r:19.8e6, u:"décès", s:"OMS 2022"},
+  {l:"Décès par cancer", p:"y", r:9.7e6, u:"décès", s:"CIRC 2022"},
+  {l:"Décès liés au tabac", p:"y", r:8e6, u:"décès", s:"OMS"},
+  {l:"Décès liés à l'alcool", p:"y", r:2.6e6, u:"décès", s:"OMS 2019"},
+  {l:"Décès d'enfants de moins de 5 ans", p:"y", r:4.8e6, u:"décès", s:"UNICEF, IGME 2023"},
+  {l:"Décès par tuberculose", p:"y", r:1.25e6, u:"décès", s:"OMS 2023"},
+  {l:"Tués sur les routes", p:"y", r:1.19e6, u:"décès", s:"OMS 2021"},
+  {l:"Suicides", p:"y", r:727e3, u:"décès", s:"OMS 2021"},
+  {l:"Décès liés au sida", p:"y", r:630e3, u:"décès", s:"ONUSIDA"},
+  {l:"Décès par paludisme", p:"y", r:600e3, u:"décès", s:"OMS 2023"},
+  {l:"Décès maternels", p:"y", r:260e3, u:"décès", s:"OMS 2023"},
+  {l:"Cigarettes fumées", p:"d", r:5200e9, u:"cigarettes", s:"Tobacco Atlas"}]},
+{id:"alimentation", t:"Alimentation et eau", c:"#9fd356", items:[
+  {big:1, l:"Céréales produites", p:"y", r:2.85e9, u:"tonnes", s:"FAO 2024"},
+  {l:"Viande produite", p:"y", r:365e6, u:"tonnes", s:"FAO 2024"},
+  {l:"Pêche et aquaculture", p:"y", r:185e6, u:"tonnes", s:"FAO, SOFIA 2024"},
+  {l:"Nourriture gaspillée", p:"y", r:1.05e9, u:"tonnes", s:"PNUE 2024"},
+  {l:"Eau douce prélevée", p:"y", r:4000e9, k:1e6, u:"M m³", s:"FAO, AQUASTAT"},
+  {l:"Décès liés à l'eau insalubre", p:"y", r:1.4e6, u:"décès", s:"OMS 2019"},
+  {l:"Personnes sous-alimentées", p:"s", v:"≈ 673 millions", u:"(2024)", s:"FAO, SOFI 2025"},
+  {l:"Adultes et enfants obèses", p:"s", v:"> 1 milliard", u:"(2022)", s:"OMS / The Lancet"},
+  {l:"Sans eau potable sûre", p:"s", v:"≈ 2,1 milliards", u:"", s:"OMS / UNICEF"}]},
+{id:"economie", t:"Économie et industrie", c:"#b79cff", items:[
+  {big:1, l:"PIB mondial produit", p:"y", r:111000e9, k:Md, u:"Md $", s:"Banque mondiale 2024"},
+  {l:"Dépenses de santé", p:"y", r:9800e9, k:Md, u:"Md $", s:"OMS 2022"},
+  {l:"Dépenses militaires", p:"y", r:2718e9, k:Md, d:1, u:"Md $", s:"SIPRI 2024"},
+  {l:"Véhicules à moteur produits", p:"y", r:92.5e6, u:"véhicules", s:"OICA 2024"},
+  {l:"Smartphones vendus", p:"y", r:1.24e9, u:"appareils", s:"IDC 2024"},
+  {l:"Ordinateurs vendus", p:"y", r:263e6, u:"appareils", s:"IDC 2024"},
+  {l:"Acier produit", p:"y", r:1.885e9, u:"tonnes", s:"worldsteel 2024"},
+  {l:"Ciment produit", p:"y", r:4.1e9, u:"tonnes", s:"USGS"},
+  {l:"Or extrait", p:"y", r:3660, d:1, u:"tonnes", s:"World Gold Council 2024"},
+  {l:"Dette publique mondiale", p:"s", v:"≈ 102 000 Md $", u:"(2024)", s:"CNUCED"}]},
+{id:"numerique", t:"Numérique et IA", c:"#5ee0e0", items:[
+  {key:"mail", big:1, l:"E-mails envoyés", p:"d", r:376e9*365.25, k:M, u:"M", s:"Radicati 2025"},
+  {l:"Recherches Google", p:"d", r:5000e9, k:M, u:"M", s:"Google 2025"},
+  {l:"Messages WhatsApp", p:"d", r:100e9*365.25, k:M, u:"M", s:"Meta"},
+  {l:"Requêtes envoyées à ChatGPT", p:"d", r:2.5e9*365.25, k:M, u:"M", s:"OpenAI 2025"},
+  {l:"Vidéo mise en ligne sur YouTube", p:"d", r:720e3*365.25, u:"heures", s:"YouTube"},
+  {l:"Électricité des centres de données", p:"d", r:415e6, u:"MWh", s:"AIE 2024"},
+  {l:"Données numériques créées", p:"y", r:181e9, u:"To", s:"IDC, prévision 2025"},
+  {l:"Internautes dans le monde", p:"s", v:"≈ 6 milliards", u:"", s:"UIT 2025"}]},
+{id:"transports", t:"Transports", c:"#ff9f5a", live:"tr", items:[
+  {l:"Vols commerciaux", p:"d", r:38e6, u:"vols", s:"IATA 2024"},
+  {l:"Passagers aériens", p:"d", r:4.9e9, u:"passagers", s:"IATA 2024"},
+  {l:"Marchandises transportées par mer", p:"y", r:12.3e9, u:"tonnes", s:"CNUCED 2024"},
+  {l:"Conteneurs traités dans les ports", p:"y", r:860e6, u:"EVP", s:"CNUCED"},
+  {l:"Flotte marchande mondiale", p:"s", v:"≈ 109 000", u:"navires", s:"CNUCED 2024"},
+  {l:"Navires en temps réel", p:"s", v:"Carte ↗", href:"https://www.marinetraffic.com/", u:"", s:"MarineTraffic"}]},
+{id:"terre", t:"Terre et espace", c:"#e2665c", live:"te", items:[
+  {l:"Trajet de la Terre autour du Soleil", p:"d", r:29.78*31557600, u:"km", s:"29,78 km/s"},
+  {l:"Orbites de l'ISS", p:"d", r:15.5*365.25, d:2, u:"orbites", s:"NASA"}]}
+];
+
+/* ================= OUTILS ================= */
+const $ = s => document.querySelector(s);
+const el = (tag, cls, txt) => { const e=document.createElement(tag); if(cls) e.className=cls; if(txt!=null) e.textContent=txt; return e; };
+const nf = d => new Intl.NumberFormat("fr-FR",{minimumFractionDigits:d||0,maximumFractionDigits:d||0});
+const NF = [nf(0),nf(1),nf(2)];
+const TAG = {y:"année", d:"jour", a:"", s:""};
+async function getJSON(url, ms){ const c=new AbortController(); const t=setTimeout(()=>c.abort(), ms||12000);
+  try{ const r=await fetch(url,{signal:c.signal}); if(!r.ok) throw new Error(r.status); return await r.json(); } finally{ clearTimeout(t); } }
+async function getText(url, ms){ const c=new AbortController(); const t=setTimeout(()=>c.abort(), ms||12000);
+  try{ const r=await fetch(url,{signal:c.signal}); if(!r.ok) throw new Error(r.status); return await r.text(); } finally{ clearTimeout(t); } }
+function setBadge(node, ok){ if(!node) return; if(node.classList.contains("dot")){ node.className="dot "+(ok?"b-live":"b-off"); return; }
+  node.className="badge "+(ok?"b-live":"b-off"); node.textContent= ok?"Direct":"Indisponible"; }
+const store = { get(k){ try{ return JSON.parse(localStorage.getItem(k)); }catch(e){ return null; } }, set(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); }catch(e){} } };
+const safeUrl = u => { try{ const x=new URL(u); return (x.protocol==="https:"||x.protocol==="http:") ? x.href : null; }catch(e){ return null; } };
+
+/* ================= RENDU DES COMPTEURS ================= */
+const live = [];           // {it, node}
+let y0,y1,d0,dayKey;
+function bounds(now){ const d=new Date(now); y0=new Date(d.getFullYear(),0,1).getTime(); y1=new Date(d.getFullYear()+1,0,1).getTime();
+  d0=new Date(d.getFullYear(),d.getMonth(),d.getDate()).getTime(); dayKey=d.toDateString(); }
+function val(it, now){
+  if(it.p==="a") return it.b + it.r*(now-it.a)/(365.25*864e5);
+  if(it.p==="y") return it.r*(now-y0)/(y1-y0);
+  return it.r/365.25*(now-d0)/864e5;
+}
+function row(it, color){
+  const r=el("div","row"+(it.big?" key":"")); r.style.setProperty("--c",color);
+  r.title=(it.p==="s"?"Référence":"Estimé")+" · source : "+(it.s||"");
+  const dot=el("span","dot "+(it.p==="s"?"b-ref":"b-est"));
+  const l=el("div","l",it.l); if(TAG[it.p]) l.append(el("small",null,TAG[it.p]));
+  const rr=el("div","r"); let v;
+  if(it.p==="s" && it.href){ v=el("a","v",it.v); v.href=it.href; v.target="_blank"; v.rel="noopener"; }
+  else v=el("span","v", it.p==="s" ? it.v : "…");
+  rr.append(v); if(it.u) rr.append(el("span","u",it.u));
+  r.append(dot,l,rr,el("div","x src",it.s||""));
+  if(it.p!=="s") live.push({it, node:v});
+  return r;
+}
+function liveRow(id, label, src, color){
+  const r=el("div","row key"); r.style.setProperty("--c",color); r.title="Direct · source : "+src;
+  const b=el("span","dot b-live"); b.id=id+"B";
+  const rr=el("div","r"); const v=el("span","v","…"); v.id=id; rr.append(v);
+  const x=el("div","x",src); x.id=id+"U";
+  r.append(b, el("div","l",label), rr, x); return r;
+}
+function build(){
+  const auto=$("#auto"), nav=$("#nav");
+  auto.append(globeSection());
+  [["villes","Heures et météo"],["actu","Actualité"]].forEach(([id,t])=>{ const a=el("a",null,t); a.href="#"+id; nav.append(a); });
+  for(const s of SECTIONS){
+    const sec=el("section"); sec.id=s.id; sec.style.setProperty("--c",s.c);
+    const det=el("details"); det.open=true;
+    const sum=el("summary"); sum.append(el("h2",null,s.t), el("span","cnt", String(s.items.length+(s.live?2:0))));
+    det.append(sum);
+    if(s.live==="tr"){ det.append(liveRow("fl","Avions en vol","OpenSky Network",s.c), liveRow("iss","Station spatiale (ISS)","wheretheiss.at",s.c)); }
+    if(s.live==="te"){ det.append(liveRow("eqN","Séismes M2,5+ en 24 h","USGS",s.c), liveRow("fx","1 euro vaut","BCE via Frankfurter",s.c)); }
+    s.items.forEach(it=>det.append(row(it,s.c)));
+    if(s.live==="te"){ det.append(el("div","sub2","Séismes les plus forts en 24 h")); const t=el("table"); t.id="eqT"; det.append(t); }
+    sec.append(det); auto.append(sec);
+    const a=el("a",null,s.t); a.href="#"+s.id; nav.append(a);
+  }
+  // Bandeau des essentiels
+  const all=SECTIONS.flatMap(s=>s.items); const pick=k=>all.find(i=>i.key===k);
+  const hero=$("#hero");
+  const tile=(lab,it,sub,id)=>{ const t=el("div","tile"); const n=el("div","num","…"); if(id) n.id=id;
+    t.append(el("div","lab",lab), n, el("div","sub",sub)); if(it) live.push({it,node:n}); hero.append(t); };
+  tile("Population mondiale", pick("pop"), "estimation ONU, en ce moment");
+  tile("Naissances aujourd'hui", pick("births"), "≈ 4,2 par seconde");
+  tile("CO₂ fossile cette année", pick("co2"), "tonnes · ≈ 1 185/s");
+  tile("Avions en vol", null, "OpenSky, en direct", "flHero");
+  tile("Énergie aujourd'hui", pick("nrj"), "MWh d'énergie primaire");
+  tile("E-mails aujourd'hui", pick("mail"), "millions");
+  tile("Séismes M2,5+ en 24 h", null, "USGS, en direct", "eqHero");
+}
+function tick(){
+  const now=Date.now(); if(new Date(now).toDateString()!==dayKey) bounds(now);
+  for(const {it,node} of live){ node.textContent = NF[it.d||0].format(val(it,now)/(it.k||1)); }
+}
+
+/* ================= HORLOGE, DATE, LUNE ================= */
+const fTime=new Intl.DateTimeFormat("fr-BE",{hour:"2-digit",minute:"2-digit",second:"2-digit",hour12:false});
+const fDate=new Intl.DateTimeFormat("fr-BE",{weekday:"long",day:"numeric",month:"long",year:"numeric"});
+function moon(d){ const syn=29.530588853, ref=Date.UTC(2000,0,6,18,14);
+  const age=(((d-ref)/864e5)%syn+syn)%syn, ill=Math.round((1-Math.cos(2*Math.PI*age/syn))/2*100);
+  const names=["Nouvelle lune 🌑","Premier croissant 🌒","Premier quartier 🌓","Gibbeuse croissante 🌔","Pleine lune 🌕","Gibbeuse décroissante 🌖","Dernier quartier 🌗","Dernier croissant 🌘"];
+  return names[Math.floor((age/syn)*8+0.5)%8]+" ("+ill+" % éclairée)"; }
+let sunTxt="";
+function clock(){
+  const d=new Date();
+  $("#clock").textContent=fTime.format(d);
+  $("#date").textContent=fDate.format(d);
+  const doy=Math.floor((d-new Date(d.getFullYear(),0,0))/864e5), tot=Math.round((y1-y0)/864e5);
+  const t=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate())); const dn=t.getUTCDay()||7; t.setUTCDate(t.getUTCDate()+4-dn);
+  const wk=Math.ceil(((t-Date.UTC(t.getUTCFullYear(),0,1))/864e5+1)/7);
+  $("#dateinfo").textContent="Semaine "+wk+" · jour "+doy+"/"+tot+" · année écoulée à "+NF[1].format((d-y0)/(y1-y0)*100)+" %";
+  $("#sunmoon").textContent=(sunTxt?sunTxt+" · ":"")+moon(d);
+  document.querySelectorAll("[data-tz]").forEach(n=>{ n.textContent=new Intl.DateTimeFormat("fr-BE",{hour:"2-digit",minute:"2-digit",hour12:false,timeZone:n.dataset.tz}).format(d); });
+}
+
+/* ================= MÉTÉO (Open-Meteo, sans clé) ================= */
+const WMO={0:["Ciel dégagé","☀️"],1:["Peu nuageux","🌤️"],2:["Partiellement nuageux","⛅"],3:["Couvert","☁️"],45:["Brouillard","🌫️"],48:["Brouillard givrant","🌫️"],
+51:["Bruine légère","🌦️"],53:["Bruine","🌦️"],55:["Bruine dense","🌧️"],56:["Bruine verglaçante","🌧️"],57:["Bruine verglaçante","🌧️"],61:["Pluie faible","🌧️"],63:["Pluie","🌧️"],65:["Pluie forte","🌧️"],
+66:["Pluie verglaçante","🌧️"],67:["Pluie verglaçante","🌧️"],71:["Neige faible","🌨️"],73:["Neige","🌨️"],75:["Neige forte","❄️"],77:["Grains de neige","🌨️"],80:["Averses","🌦️"],81:["Averses","🌧️"],82:["Averses violentes","⛈️"],
+85:["Averses de neige","🌨️"],86:["Averses de neige","❄️"],95:["Orage","⛈️"],96:["Orage et grêle","⛈️"],99:["Orage et grêle","⛈️"]};
+const wmo=c=>WMO[c]||["—","·"];
+function buildCities(){ const box=$("#cities"); CITIES.forEach((c,i)=>{ const d=el("div","city"); const h=el("div","h","--:--"); h.dataset.tz=c.tz;
+  const w=el("div","w","…"); w.id="cw"+i; d.append(el("div","n",c.n),h,w); box.append(d); }); }
+async function weather(){
+  try{
+    const u="https://api.open-meteo.com/v1/forecast?latitude="+CITIES.map(c=>c.lat).join(",")+"&longitude="+CITIES.map(c=>c.lon).join(",")+
+      "&current=temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,wind_speed_10m&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,sunrise,sunset&timezone=auto&forecast_days=5";
+    let j=await getJSON(u); if(!Array.isArray(j)) j=[j];
+    j.forEach((x,i)=>{ const n=$("#cw"+i); if(n&&x.current){ const [t,ic]=wmo(x.current.weather_code); n.textContent=ic+" "+Math.round(x.current.temperature_2m)+" °C"; n.title=t; } });
+    const h=j[0], c=h.current, [txt,ic]=wmo(c.weather_code), now=$("#wNow"); now.textContent="";
+    now.append(el("b",null,"Bruxelles"), el("span","t",ic+" "+NF[1].format(c.temperature_2m)+" °C"), el("span",null,txt),
+      el("span","d","ressenti "+Math.round(c.apparent_temperature)+" °C · vent "+Math.round(c.wind_speed_10m)+" km/h · humidité "+c.relative_humidity_2m+" % · relevé "+String(c.time).slice(11)));
+    const days=$("#wDays"); days.textContent="";
+    h.daily.time.forEach((t,i)=>{ const d=el("div","day"); const [tx,i2]=wmo(h.daily.weather_code[i]);
+      d.append(el("div","n", i===0?"Auj.":new Intl.DateTimeFormat("fr-BE",{weekday:"short"}).format(new Date(t+"T12:00"))+" "),
+        el("div","ic",i2+" "), el("div","mm",Math.round(h.daily.temperature_2m_min[i])+"° / "+Math.round(h.daily.temperature_2m_max[i])+"°"),
+        el("div","p",tx), el("div","p"," ☂ "+(h.daily.precipitation_probability_max[i]??"—")+" %")); days.append(d); });
+    sunTxt="☀ Bruxelles "+String(h.daily.sunrise[0]).slice(11)+" → "+String(h.daily.sunset[0]).slice(11);
+    setBadge($("#stMeteo"),true);
+  }catch(e){ setBadge($("#stMeteo"),false); if(/chargement/.test($("#wNow").textContent)) $("#wNow").textContent="Météo de Bruxelles indisponible pour le moment."; }
+}
+
+/* ================= ACTUALITÉ (RSS via relais CORS — point fragile) ================= */
+const RELAYS=[u=>"https://api.allorigins.win/raw?url="+encodeURIComponent(u), u=>"https://corsproxy.io/?url="+encodeURIComponent(u)];
+async function feedItems(url){
+  for(const r of RELAYS){ try{ const xml=new DOMParser().parseFromString(await getText(r(url),10000),"text/xml");
+      const it=[...xml.querySelectorAll("item")].slice(0,5).map(n=>({t:n.querySelector("title")?.textContent?.trim(), u:n.querySelector("link")?.textContent?.trim(), d:n.querySelector("pubDate")?.textContent}));
+      if(it.length) return it; }catch(e){} }
+  const j=await getJSON("https://api.rss2json.com/v1/api.json?rss_url="+encodeURIComponent(url),10000);
+  if(!j.items||!j.items.length) throw new Error("vide");
+  return j.items.slice(0,5).map(i=>({t:i.title,u:i.link,d:i.pubDate}));
+}
+async function news(){
+  const box=$("#news"); let ok=0;
+  const res=await Promise.allSettled(FEEDS.map(f=>feedItems(f.url)));
+  box.textContent="";
+  FEEDS.forEach((f,i)=>{ const d=el("div","feed"); d.append(el("h3",null,f.n));
+    if(res[i].status==="fulfilled"){ ok++; const ol=el("ol");
+      res[i].value.forEach(x=>{ if(!x.t) return; const li=el("li"); const href=safeUrl(x.u);
+        if(href){ const a=el("a",null,x.t); a.href=href; a.target="_blank"; a.rel="noopener noreferrer"; li.append(a); } else li.append(x.t);
+        const dt=new Date(x.d); if(!isNaN(dt)){ li.append(el("time",null,new Intl.DateTimeFormat("fr-BE",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"}).format(dt))); }
+        ol.append(li); }); d.append(ol);
+    } else { const p=el("div","u","Flux inaccessible pour le moment. "); const a=el("a",null,"Ouvrir le site ↗"); a.href=f.site; a.target="_blank"; a.rel="noopener"; p.append(a); d.append(p); }
+    box.append(d); });
+  setBadge($("#stNews"), ok>0);
+}
+
+/* ================= GLOBE 3D (Three.js) ================= */
+const THREE_URL="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js";
+const LAND_URL="https://cdn.jsdelivr.net/npm/world-atlas@2/land-110m.json";
+const RAD=Math.PI/180;
+function ll(lat,lon,r){ const p=(90-lat)*RAD, t=(lon+180)*RAD; return [-r*Math.sin(p)*Math.cos(t), r*Math.cos(p), r*Math.sin(p)*Math.sin(t)]; }
+function loadScript(u){ return new Promise((ok,ko)=>{ const e=document.createElement("script"); e.src=u; e.onload=ok; e.onerror=()=>ko(new Error("script")); document.head.append(e); }); }
+function globeSection(){
+  const sec=el("section"); sec.id="globe"; const det=el("details"); det.id="globeDet"; det.open=store.get("mdGlobe")!==false;
+  det.addEventListener("toggle",()=>store.set("mdGlobe",det.open));
+  const sum=el("summary"); sum.append(el("h2",null,"Globe 3D en direct"), el("span","cnt","glisser pour tourner"));
+  const box=el("div"); box.id="globeBox"; const msg=el("div",null,"Chargement du globe…"); msg.id="globeMsg"; box.append(msg);
+  const lg=el("div","glegend");
+  [["#ff9f5a","Avions en vol"],["#ff4d4d","Séismes 24 h"],["#ffe066","ISS"],["#4cc2ff","Villes"],["#8497b0","Jour / nuit réels"]].forEach(([c,t])=>{ const sp=el("span"); const i=el("i"); i.style.background=c; sp.append(i,t); lg.append(sp); });
+  det.append(sum,box,lg); sec.append(det); return sec;
+}
+const G={ready:false, planes:[], quakes:[], issPos:null,
+  setPlanes(a){ this.planes=a||[]; if(this.ready) this.drawPlanes(); },
+  setQuakes(f){ this.quakes=f||[]; if(this.ready) this.drawQuakes(); },
+  setISS(la,lo){ this.issPos=[la,lo]; if(this.ready) this.drawISS(); },
+  theme(){}, drawPlanes(){}, drawQuakes(){}, drawISS(){} };
+async function initGlobe(){
+  const box=$("#globeBox"), msg=$("#globeMsg");
+  try{ await loadScript(THREE_URL); }catch(e){ msg.textContent="Globe 3D indisponible : la bibliothèque Three.js n'a pas pu être chargée (connexion requise)."; return; }
+  let renderer;
+  try{ renderer=new THREE.WebGLRenderer({antialias:true,alpha:true}); }catch(e){ msg.textContent="Globe 3D indisponible : WebGL n'est pas actif dans ce navigateur."; return; }
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2)); box.append(renderer.domElement);
+  const scene=new THREE.Scene(), cam=new THREE.PerspectiveCamera(35,1,.1,100); cam.position.z=3.75;
+  const g=new THREE.Group(); scene.add(g); scene.add(new THREE.AmbientLight(0xffffff,.42));
+  const sun=new THREE.DirectionalLight(0xffffff,1.15); g.add(sun);
+  const ocean=new THREE.Mesh(new THREE.SphereGeometry(1,64,48), new THREE.MeshPhongMaterial({shininess:12})); g.add(ocean);
+  const halo=new THREE.Mesh(new THREE.SphereGeometry(1.06,48,32), new THREE.MeshBasicMaterial({side:THREE.BackSide,transparent:true,opacity:.13})); scene.add(halo);
+  const lines=(arr,mat)=>{ const geo=new THREE.BufferGeometry(); geo.setAttribute("position",new THREE.Float32BufferAttribute(arr,3)); const l=new THREE.LineSegments(geo,mat); g.add(l); return l; };
+  // Méridiens et parallèles
+  const gr=[]; for(let lo=-180;lo<180;lo+=30) for(let la=-90;la<90;la+=5) gr.push(...ll(la,lo,1.001),...ll(la+5,lo,1.001));
+  for(let la=-60;la<=60;la+=30) for(let lo=-180;lo<180;lo+=5) gr.push(...ll(la,lo,1.001),...ll(la,lo+5,1.001));
+  const gratMat=new THREE.LineBasicMaterial({transparent:true,opacity:.22}); lines(gr,gratMat);
+  const landMat=new THREE.LineBasicMaterial({transparent:true,opacity:.95});
+  // Pastille ronde pour les nuages de points
+  const cv=document.createElement("canvas"); cv.width=cv.height=64; const cx=cv.getContext("2d"); cx.beginPath(); cx.arc(32,32,28,0,7); cx.fillStyle="#fff"; cx.fill();
+  const disc=new THREE.CanvasTexture(cv);
+  const cloud=(color,size)=>{ const p=new THREE.Points(new THREE.BufferGeometry(), new THREE.PointsMaterial({color,size,map:disc,alphaTest:.5,transparent:true,sizeAttenuation:true})); g.add(p); return p; };
+  const fill=(pts,arr)=>{ pts.geometry.dispose(); pts.geometry=new THREE.BufferGeometry(); pts.geometry.setAttribute("position",new THREE.Float32BufferAttribute(arr,3)); };
+  const planes=cloud(0xff9f5a,.016), q1=cloud(0xff4d4d,.035), q2=cloud(0xff4d4d,.085), cityPts=cloud(0x4cc2ff,.04);
+  const label=(txt,color)=>{ const c=document.createElement("canvas"); c.width=256; c.height=64; const x=c.getContext("2d"); x.font="600 30px system-ui,sans-serif"; x.textBaseline="middle";
+    x.lineWidth=6; x.strokeStyle="rgba(0,0,0,.75)"; x.strokeText(txt,6,32); x.fillStyle=color; x.fillText(txt,6,32);
+    const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),transparent:true})); sp.scale.set(.5,.125,1); sp.center.set(0,.5); g.add(sp); return sp; };
+  const ca=[]; CITIES.forEach(c=>{ ca.push(...ll(c.lat,c.lon,1.006)); const left=c.n==="Londres", sp=label(c.n,"#e8eef7"); if(left){ sp.center.set(.62,.5); } sp.position.set(...ll(c.lat,c.lon+(left?-2.5:2.5),1.03)); }); fill(cityPts,ca);
+  const issDot=cloud(0xffe066,.075); const issLab=label("ISS","#ffe066"); issLab.visible=false;
+  G.drawPlanes=()=>{ const a=[]; G.planes.forEach(p=>a.push(...ll(p[0],p[1],1.012))); fill(planes,a); };
+  G.drawQuakes=()=>{ const a=[],b=[]; G.quakes.forEach(f=>{ const c=f.geometry&&f.geometry.coordinates; if(!c) return; ((f.properties.mag||0)>=4.5?b:a).push(...ll(c[1],c[0],1.008)); }); fill(q1,a); fill(q2,b); };
+  G.drawISS=()=>{ if(!G.issPos) return; fill(issDot,ll(G.issPos[0],G.issPos[1],1.065)); issLab.position.set(...ll(G.issPos[0],G.issPos[1]+3,1.08)); issLab.visible=true; };
+  G.theme=()=>{ const dark=document.documentElement.dataset.theme!=="light";
+    ocean.material.color.set(dark?0x12304f:0xbcd9f2); ocean.material.specular.set(dark?0x1b3a5c:0x8fb5d8);
+    landMat.color.set(dark?0x7fd4ff:0x0a5c96); gratMat.color.set(dark?0x4cc2ff:0x35658f); halo.material.color.set(dark?0x4cc2ff:0x0a6fb5); };
+  // Position réelle du Soleil : la face éclairée est le jour
+  const placeSun=()=>{ const d=new Date(), doy=(Date.UTC(d.getUTCFullYear(),d.getUTCMonth(),d.getUTCDate())-Date.UTC(d.getUTCFullYear(),0,0))/864e5;
+    const decl=-23.44*Math.cos(2*Math.PI*(doy+10)/365), h=d.getUTCHours()+d.getUTCMinutes()/60; sun.position.set(...ll(decl,-15*(h-12),10)); };
+  placeSun(); setInterval(placeSun,60e3);
+  G.ready=true; G.theme(); G.drawPlanes(); G.drawQuakes(); G.drawISS();
+  // Côtes (Natural Earth 110m, format TopoJSON décodé ici)
+  getJSON(LAND_URL,15000).then(t=>{ const [sx,sy]=t.transform.scale,[tx,ty]=t.transform.translate, a=[];
+    t.arcs.forEach(arc=>{ let x=0,y=0,prev=null; arc.forEach(pt=>{ x+=pt[0]; y+=pt[1]; const cur=ll(y*sy+ty,x*sx+tx,1.003); if(prev) a.push(...prev,...cur); prev=cur; }); });
+    lines(a,landMat); }).catch(()=>{ msg.textContent="Contours des continents indisponibles"; msg.style.alignItems="flex-end"; });
+  msg.textContent="";
+  // Orientation de départ : Europe face à l'écran ; rotation lente ; glisser pour tourner
+  g.rotation.set(.45,-Math.PI/2-(HOME.lon+12)*RAD,0);
+  let drag=null, idle=0;
+  box.addEventListener("pointerdown",e=>{ drag={x:e.clientX,y:e.clientY,ry:g.rotation.y,rx:g.rotation.x}; box.setPointerCapture(e.pointerId); });
+  box.addEventListener("pointermove",e=>{ if(!drag) return; g.rotation.y=drag.ry+(e.clientX-drag.x)*.006; g.rotation.x=Math.max(-1.3,Math.min(1.3,drag.rx+(e.clientY-drag.y)*.006)); });
+  const end=()=>{ drag=null; idle=performance.now()+4000; }; box.addEventListener("pointerup",end); box.addEventListener("pointercancel",end);
+  const size=()=>{ const w=box.clientWidth,h=box.clientHeight; if(!w||!h) return; renderer.setSize(w,h,false); cam.aspect=w/h; cam.updateProjectionMatrix(); };
+  new ResizeObserver(size).observe(box); size();
+  const still=window.matchMedia("(prefers-reduced-motion:reduce)").matches;
+  (function loop(t){ requestAnimationFrame(loop); if(document.hidden||!$("#globeDet").open) return;
+    if(!drag && !still && t>idle) g.rotation.y+=.0006; renderer.render(scene,cam); })(0);
+}
+
+/* ================= AVIONS (OpenSky), ISS, SÉISMES (USGS), CHANGES (BCE) ================= */
+function showFlights(n, ok, when){
+  const t = n!=null ? NF[0].format(n) : "—";
+  $("#fl").textContent=t; $("#flHero").textContent=t;
+  $("#flU").textContent = n!=null ? "appareils suivis · relevé de "+when+" · OpenSky" : "OpenSky ne répond pas · ordre de grandeur : 10 000 à 15 000";
+  setBadge($("#flB"), ok);
+}
+async function flights(){
+  const c=store.get("mdFlights");
+  if(c && Date.now()-c.t<14*60e3){ showFlights(c.n,true,fTime.format(new Date(c.t)).slice(0,5)); G.setPlanes(c.p); return; }
+  try{ const j=await getJSON("https://opensky-network.org/api/states/all",30000);
+    const air=(j.states||[]).filter(s=>s[8]===false), n=air.length; if(!n) throw new Error("vide");
+    let p=air.filter(s=>s[5]!=null&&s[6]!=null).map(s=>[Math.round(s[6]*10)/10,Math.round(s[5]*10)/10]);
+    if(p.length>5000){ const k=p.length/5000; p=p.filter((_,i)=>Math.floor(i/k)!==Math.floor((i-1)/k)); }   // échantillon pour l'affichage
+    store.set("mdFlights",{n,t:Date.now(),p}); showFlights(n,true,fTime.format(new Date()).slice(0,5)); G.setPlanes(p);
+  }catch(e){ if(c){ showFlights(c.n,false,fTime.format(new Date(c.t)).slice(0,5)); G.setPlanes(c.p); } else showFlights(null,false); }
+}
+async function iss(){
+  try{ const j=await getJSON("https://api.wheretheiss.at/v1/satellites/25544",8000);
+    const la=j.latitude, lo=j.longitude;
+    $("#iss").textContent=NF[0].format(Math.abs(la))+"° "+(la>=0?"N":"S")+" "+NF[0].format(Math.abs(lo))+"° "+(lo>=0?"E":"O");
+    $("#issU").textContent="altitude "+Math.round(j.altitude)+" km · "+NF[0].format(j.velocity)+" km/h";
+    setBadge($("#issB"),true); G.setISS(la,lo);
+  }catch(e){ setBadge($("#issB"),false); }
+}
+async function quakes(){
+  try{ const j=await getJSON("https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/2.5_day.geojson");
+    const f=j.features||[]; const n=NF[0].format(f.length); $("#eqN").textContent=n; $("#eqHero").textContent=n;
+    const top=f.slice().sort((a,b)=>(b.properties.mag||0)-(a.properties.mag||0)).slice(0,5);
+    const t=$("#eqT"); t.textContent=""; const hr=el("tr"); ["M","Lieu","Heure","Prof."].forEach(h=>hr.append(el("th",null,h))); t.append(hr);
+    top.forEach(q=>{ const r=el("tr"); const p=q.properties; const lieu=el("td"); const href=safeUrl(p.url);
+      if(href){ const a=el("a",null,p.place||"—"); a.href=href; a.target="_blank"; a.rel="noopener noreferrer"; lieu.append(a); } else lieu.textContent=p.place||"—";
+      r.append(el("td","m",NF[1].format(p.mag)), lieu,
+        el("td",null,new Intl.DateTimeFormat("fr-BE",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"}).format(new Date(p.time))),
+        el("td",null,Math.round(q.geometry.coordinates[2])+" km")); t.append(r); });
+    setBadge($("#eqNB"),true); G.setQuakes(f);
+  }catch(e){ setBadge($("#eqNB"),false); if($("#eqN").textContent==="…"){ $("#eqN").textContent="—"; $("#eqHero").textContent="—"; } }
+}
+async function rates(){
+  const urls=["https://api.frankfurter.dev/v1/latest?base=EUR&symbols=USD,GBP,CHF,JPY,CNY","https://api.frankfurter.app/latest?from=EUR&to=USD,GBP,CHF,JPY,CNY"];
+  for(const u of urls){ try{ const j=await getJSON(u,8000); const r=j.rates;
+      $("#fx").textContent=NF[2].format(r.USD)+" $"; $("#fxU").textContent=NF[2].format(r.GBP)+" £ · "+NF[2].format(r.CHF)+" CHF · "+NF[0].format(r.JPY)+" ¥ · "+NF[2].format(r.CNY)+" CNY · cours du "+j.date;
+      setBadge($("#fxB"),true); return; }catch(e){} }
+  setBadge($("#fxB"),false);
+}
+
+/* ================= BOUTONS ================= */
+$("#bTheme").onclick=()=>{ const h=document.documentElement; h.dataset.theme=h.dataset.theme==="dark"?"light":"dark"; store.set("mdTheme",h.dataset.theme); G.theme(); };
+$("#bSrc").onclick=()=>{ store.set("mdSrc",document.documentElement.classList.toggle("src")); };
+$("#bBig").onclick=()=>{ store.set("mdBig",document.documentElement.classList.toggle("big")); };
+$("#bFull").onclick=()=>{ try{ document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen(); }catch(e){} };
+if(store.get("mdTheme")==="light") document.documentElement.dataset.theme="light";
+if(store.get("mdSrc")) document.documentElement.classList.add("src");
+if(store.get("mdBig")) document.documentElement.classList.add("big");
+
+/* ================= DÉMARRAGE ================= */
+bounds(Date.now()); build(); buildCities(); clock(); tick();
+setInterval(tick,200); setInterval(clock,1000);
+const every=(fn,ms)=>{ fn(); setInterval(fn,ms); };
+initGlobe();
+every(weather,15*60e3); every(news,15*60e3); every(quakes,5*60e3); every(iss,10e3); every(flights,15*60e3); every(rates,6*3600e3);
+</script>
+</body>
+</html>
